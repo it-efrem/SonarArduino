@@ -20,16 +20,20 @@ float scalePixel = 1;
 int angle = 0;
 
 //Тип радара
-enum TypeSonar {line, circle};
-TypeSonar typeSonar;
+enum TypeSonar { line, circle };
+TypeSonar typeSonar = circle;
+
+//Охват радара
+enum AngleSonar { coverage180 = 180, coverage360 = 360 };
+AngleSonar const angleSonar = coverage360;
 
 //Расстояние
 int distance = 0;
 int maxDistance = 250;
 
 //Массивы объектов
-int objectAngle[180];
-int objectAngleOld[180];
+int objectAngle[angleSonar];
+int objectAngleOld[angleSonar];
 
 struct Color
 {
@@ -88,7 +92,7 @@ void Circle::DrawObject(TypeSonar typeSonar)
 			glColor3f(1, 0.138, 0.138);
 			glBegin(GL_QUADS);
 
-			for (int i = 0; i < 180; i++) {
+			for (int i = 0; i < angleSonar; i++) {
 				float a = (float)i / 57.2974; //Приводим к радианам
 
 				//Начальные координаты
@@ -102,32 +106,36 @@ void Circle::DrawObject(TypeSonar typeSonar)
 			glEnd();
 		break;
 		case (circle) :
-			for (int i = 0; i < 180; i++) {
+			for (int i = 0; i < angleSonar; i++) {
 				float a = (float)i / 57.2974; //Приводим к радианам
 
-				//Если объект изменил расстояние
-				if (objectAngle[i] != objectAngleOld[i])
+				//Отображать точки, только если они входят в область видимости радара
+				if (objectAngle[i] < maxDistance)
 				{
-					glColor3f(0, 0, 1);
+					//Если объект изменил расстояние
+					if (objectAngle[i] != objectAngleOld[i])
+					{
+						glColor3f(0, 0, 1);
+						glBegin(GL_TRIANGLE_FAN);
+						//Прорисовка предыдущего положения
+						glVertex2f(cos(a) * (objectAngleOld[i] * scalePixel), sin(a) * (objectAngleOld[i] * scalePixel) + _y); //Центр
+						for (int j = 0; j <= 360; j++) {
+							float ra = (float)j / 57.2974; //Приводим к радианам
+							glVertex2f(cos(ra) * 5 + cos(a) * (objectAngleOld[i] * scalePixel), sin(ra) * 5 + sin(a) * (objectAngleOld[i] * scalePixel) + _y);
+						}
+						glEnd();
+					}
+
+					glColor3f(1, 0, 0);
 					glBegin(GL_TRIANGLE_FAN);
-					//Прорисовка предыдущего положения
-					glVertex2f(cos(a) * (objectAngleOld[i] * scalePixel), sin(a) * (objectAngleOld[i] * scalePixel) + _y); //Центр
+					//Прорисовка свежих данных
+					glVertex2f(cos(a) * (objectAngle[i] * scalePixel), sin(a) * (objectAngle[i] * scalePixel) + _y); //Центр
 					for (int j = 0; j <= 360; j++) {
 						float ra = (float)j / 57.2974; //Приводим к радианам
-						glVertex2f(cos(ra) * 5 + cos(a) * (objectAngleOld[i] * scalePixel), sin(ra) * 5 + sin(a) * (objectAngleOld[i] * scalePixel) + _y);
+						glVertex2f(cos(ra) * 5 + cos(a) * (objectAngle[i] * scalePixel), sin(ra) * 5 + sin(a) * (objectAngle[i] * scalePixel) + _y);
 					}
 					glEnd();
 				}
-
-				glColor3f(1, 0, 0);
-				glBegin(GL_TRIANGLE_FAN);
-				//Прорисовка свежих данных
-				glVertex2f(cos(a) * (objectAngle[i] * scalePixel), sin(a) * (objectAngle[i] * scalePixel) + _y); //Центр
-				for (int j = 0; j <= 360; j++) {
-					float ra = (float)j / 57.2974; //Приводим к радианам
-					glVertex2f(cos(ra) * 5 + cos(a) * (objectAngle[i] * scalePixel), sin(ra) * 5 + sin(a) * (objectAngle[i] * scalePixel) + _y);
-				}
-				glEnd();
 			}
 		break;
 	}
@@ -164,7 +172,7 @@ void Initialize()
 	glMatrixMode(GL_MODELVIEW);
 
 	//Инициализация массива объектов
-	for (int i = 0; i < 180; i++)
+	for (int i = 0; i < angleSonar; i++)
 	{
 		objectAngle[i] = maxDistance * scalePixel;
 		objectAngleOld[i] = maxDistance * scalePixel;
@@ -175,7 +183,16 @@ void resize(int w, int h)
 {
 	width = w;
 	height = h;
-	scalePixel = (height * 0.9f) / maxDistance;
+
+	switch (angleSonar)
+	{
+		case (coverage360) :
+			scalePixel = (height / 2 * 0.9f) / maxDistance;
+		break;
+		default:
+			scalePixel = (height * 0.9f) / maxDistance;
+		break;
+	}
 }
 
 void display()
@@ -184,14 +201,59 @@ void display()
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	//Фон радара
+	//Изменение отображение радара по типу 
+	if (angleSonar == coverage360)
+	{
+		//Фон радара
+		Circle Back(0, 0, 0, 360, height90 / 2, Color(0, 0.8, 0));
+		Back.Draw();
+
+		//Отображение объектов
+		Back.DrawObject(typeSonar);
+
+		//Разметка радара (круги)
+		Circle Marking(0, 0, 0, 360, height90 / 2, Color(0.9, 0.9, 0.9));
+		Marking.DrawCircle(height90 / 2);
+		Marking.DrawCircle(height90 / 2 * 0.8);
+		Marking.DrawCircle(height90 / 2 * 0.6);
+		Marking.DrawCircle(height90 / 2 * 0.4);
+		Marking.DrawCircle(height90 / 2 * 0.2);
+
+		//Разметка радара (линии)
+		Marking.DrawLine(0);
+		Marking.DrawLine(22);
+		Marking.DrawLine(45);
+		Marking.DrawLine(67);
+		Marking.DrawLine(90);
+		Marking.DrawLine(112);
+		Marking.DrawLine(135);
+		Marking.DrawLine(157);
+		Marking.DrawLine(180);
+		Marking.DrawLine(202);
+		Marking.DrawLine(225);
+		Marking.DrawLine(247);
+		Marking.DrawLine(270);
+		Marking.DrawLine(292);
+		Marking.DrawLine(315);
+		Marking.DrawLine(337);
+
+		//Линии обновления радара
+		Circle Line(0, 0, angle, angle + 1, height90 / 2, Color(1, 1, 1));
+		Line.Draw();
+
+		Circle Line1(0, 0, angle, angle + 1, -height90 / 2, Color(1, 1, 1));
+		Line1.Draw();
+	}
+	else
+	{
+		//Фон радара
 		Circle Back(0, -height90 / 2, 0, 180, height90, Color(0, 0.8, 0));
 		Back.Draw();
 
-	//Отображение объектов
-		Back.DrawObject(circle);
+		//Отображение объектов
+		Back.DrawObject(typeSonar);
 
-	//Разметка радара (круги)
+		//Разметка радара (круги)
 		Circle Marking(0, -height90 / 2, 0, 180, height90, Color(0.9, 0.9, 0.9));
 		Marking.DrawCircle(height90);
 		Marking.DrawCircle(height90 * 0.8);
@@ -199,7 +261,7 @@ void display()
 		Marking.DrawCircle(height90 * 0.4);
 		Marking.DrawCircle(height90 * 0.2);
 
-	//Разметка радара (линии)
+		//Разметка радара (линии)
 		Marking.DrawLine(0);
 		Marking.DrawLine(22);
 		Marking.DrawLine(45);
@@ -210,37 +272,62 @@ void display()
 		Marking.DrawLine(157);
 		Marking.DrawLine(180);
 
-	//Линия обновления радара
+		//Линия обновления радара
 		Circle Line(0, -height90 / 2, angle, angle + 1, height90, Color(1, 1, 1));
 		Line.Draw();
+	}
 
 	glutSwapBuffers();
 }
 
 //Анимация
-void Timer(int)
+void Update(int)
 {
 	glutPostRedisplay();
-	glutTimerFunc(5, Timer, 0);
+	glutTimerFunc(50, Update, 0);
 
-	//Получение данных с радара
-		angle += 1;
-		
-		if (angle > 179)
+	//Получение данных с сонара (симуляция)
+		angle += 1; //Назначение из порта
+
+		if (angle % 10 == 0) //Убрать
 		{
-			angle = 0;
-			for (int i = 0; i < 180; i++)
+			objectAngleOld[angle] = objectAngle[angle];
+
+			if (angle > angleSonar)
+				angle = 0;
+
+			distance = -rand() % 175 + maxDistance;
+			objectAngle[angle] = distance;
+
+			if (angleSonar == coverage360)
 			{
-				objectAngleOld[i] = objectAngle[i];
+				int angleNew;
+
+				if (angle >= 180)
+					angleNew = angle - 180;
+
+				if (angle < 180)
+					angleNew = angle + 180;
+
+				objectAngleOld[angleNew] = objectAngle[angleNew];
+				objectAngle[angleNew] = distance;
 			}
 		}
-
-		distance = -rand() % 175 + maxDistance;
-		objectAngle[angle] = distance;
 }
 
 int main(int argc, char * argv[])
 {
+	setlocale(LC_ALL, "Russian");
+	//Установка параметров запуска 
+	int var = 0;
+		std::cout << "Линии или точки? (1/2)" << std::endl;
+		std::cin >> var;
+
+		if (var == 1)
+			typeSonar = line;
+		if (var == 2)
+			typeSonar = circle;
+
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_STENCIL);
 
@@ -251,11 +338,9 @@ int main(int argc, char * argv[])
 
 	glutDisplayFunc(display);
 	glutReshapeFunc(resize);
-	glutTimerFunc(5, Timer, 0);
+	glutTimerFunc(50, Update, 0);
 
 	std::cout << "An image built in " << clock() << " ms";
-
-	//Получение данных
 
 	glutMainLoop();
 	return 0;
