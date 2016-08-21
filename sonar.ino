@@ -2,41 +2,51 @@
 
 Servo servo;
 
-const int SonarTrig = 2; 
-const int SonarEcho = 3; 
-const int SonarServo = 4;
+const int sonarServo = 2;
 
-const int delayOfMeasuring = 30; //ms
+const int sonar1trig = 3; 
+const int sonar1echo = 4; 
 
-unsigned int time_us=0;
-unsigned int distance_sm=0;
+const int sonar2trig = 5; 
+const int sonar2echo = 6; 
 
-int ServoStartAngle = 0;
-int ServoMaxAngle = 180;
-int ServoAngle = 0;
+const int delayOfMeasuring = 50; //ms
 
-void getDistance()
+int servoStartAngle = 0;
+int servoMaxAngle = 180;
+int servoAngle = 0;
+
+int GetDistanceSm(int trig, int echo)
 {
-  //Получение растояния
-    digitalWrite(SonarTrig, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(SonarTrig, LOW);
-    time_us=pulseIn(SonarEcho, HIGH);
-    distance_sm=time_us/58;
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+  int time_us = pulseIn(echo, HIGH);
+  return time_us / 58;
+}
 
-  //Вывод данных в порт
-    Serial.print(ServoAngle);
-    Serial.print('=');
-    Serial.print(distance_sm); 
-    Serial.println(); 
+void SendtData()
+{
+  int dist1 = GetDistanceSm(sonar1trig, sonar1echo);
+  //int dist2 = GetDistanceSm(sonar2trig, sonar2echo);/
+  
+  //Передаем информацию 4-мя байтами
+    Serial.print(char(int(servoAngle-128)));
+    Serial.print(char(int(dist1 - 128)));
+    Serial.print(char(int(255/*dist2*/ - 128)));
+    Serial.print(char(int(servoAngle + dist1 + 255/*dist2*/ - 128)));
 }
 
 void setup() 
 { 
-  pinMode(SonarTrig, OUTPUT); 
-  pinMode(SonarEcho, INPUT); 
-  pinMode(SonarServo, OUTPUT);
-  servo.attach(4);
+  pinMode(sonarServo, OUTPUT);
+  servo.attach(sonarServo);
+  
+  pinMode(sonar1trig, OUTPUT); 
+  pinMode(sonar1echo, INPUT); 
+
+  pinMode(sonar2trig, OUTPUT); 
+  pinMode(sonar2echo, INPUT); 
     
   Serial.begin(9600); 
 }
@@ -44,18 +54,18 @@ void setup()
 void loop() 
 { 
   //Вращение радара
-    for (int i = 0; i <= ServoMaxAngle; i++)
+    for (int i = 0; i <= servoMaxAngle; i++)
     {
-      ServoAngle = i;
-      servo.write(ServoAngle);
-      getDistance();
+      servoAngle = i;
+      servo.write(servoAngle);
+      SendtData();
       delay(delayOfMeasuring);
     }
-    for (int i = ServoMaxAngle; i >= 0; i--)
+    for (int i = servoMaxAngle; i >= 0; i--)
     {
-      ServoAngle = i;
-      servo.write(ServoAngle);
-      getDistance();
+      servoAngle = i;
+      servo.write(servoAngle);
+      SendtData();
       delay(delayOfMeasuring);
     } 
 }
