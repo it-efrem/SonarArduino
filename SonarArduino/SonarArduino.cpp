@@ -35,7 +35,7 @@ bool checkControlSum(int angle, int d1, int d2,  int control)
 //Инициализируем радар
 SerialGate port(2, 9600, 40, 5);
 
-int dataPort[3];
+int dataPort[4];
 int *dataPortPtr = dataPort;
 
 void Update(int)
@@ -52,7 +52,7 @@ void Update(int)
 			//Если это не помехи и данные целые (контрольная сумма совпадает)
 			if (checkControlSum(dataPort[0], dataPort[1], dataPort[2], dataPort[3]))
 			{
-				cout << dataPort[0] << " | " << dataPort[1] << " | " << dataPort[2] << " | "  << dataPort[3] << endl;
+				//cout << dataPort[0] << " | " << dataPort[1] << " | " << dataPort[2] << " | "  << dataPort[3] << endl;
 				oldAngle = dataPort[0];
 				angle = dataPort[0];
 				guiSAhH::distance = dataPort[1];
@@ -124,5 +124,10 @@ int main(int argc, char * argv[])
 
 	glutMainLoop();
 	port.Close();
+	
+	//Очищаяем память
+		delete[] objectAngle;
+		delete[] objectAngleOld;
+
 	return 0;
 }

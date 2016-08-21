@@ -105,5 +105,7 @@ void SerialGate::GetSeparationData(int *arrayValue, int countUnitData)
 		arrayValue[i] = 0;
 		arrayValue[i] = int(buf[i]) + 128;
 	}
+
+	delete[] buf;
 }
 #endif
