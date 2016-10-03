@@ -1,4 +1,4 @@
-// SonarArduino.cpp: определяет точку входа для консольного приложения.
+п»ї// SonarArduino.cpp: РѕРїСЂРµРґРµР»СЏРµС‚ С‚РѕС‡РєСѓ РІС…РѕРґР° РґР»СЏ РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ.
 //
 
 #include "stdafx.h"
@@ -14,14 +14,14 @@
 using namespace std;
 using namespace guiSAhH;
 
-//Проверка контрольной суммы
+//РџСЂРѕРІРµСЂРєР° РєРѕРЅС‚СЂРѕР»СЊРЅРѕР№ СЃСѓРјРјС‹
 bool checkControlSum(int angle, int d1, int d2,  int control)
 {
 	int sum = angle + d1 + d2;
 
-	/*т.к. передача идет в типе char,
-	максимальнная вместимость бита - 256 значений, а сумма может быть больше,
-	обрезается еще перед передачей, проверим это
+	/*С‚.Рє. РїРµСЂРµРґР°С‡Р° РёРґРµС‚ РІ С‚РёРїРµ char,
+	РјР°РєСЃРёРјР°Р»СЊРЅРЅР°СЏ РІРјРµСЃС‚РёРјРѕСЃС‚СЊ Р±РёС‚Р° - 256 Р·РЅР°С‡РµРЅРёР№, Р° СЃСѓРјРјР° РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ,
+	РѕР±СЂРµР·Р°РµС‚СЃСЏ РµС‰Рµ РїРµСЂРµРґ РїРµСЂРµРґР°С‡РµР№, РїСЂРѕРІРµСЂРёРј СЌС‚Рѕ
 	*/
 	while (sum / 256 >= 1)
 		sum -= 256;
@@ -32,7 +32,7 @@ bool checkControlSum(int angle, int d1, int d2,  int control)
 	return true;
 }
 
-//Инициализируем радар
+//РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј СЂР°РґР°СЂ
 SerialGate port(2, 9600, 40, 5);
 
 int dataPort[4];
@@ -42,14 +42,14 @@ void Update(int)
 {
 	while (true)
 	{
-		//Получение данных
+		//РџРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С…
 		port.GetSeparationData(dataPortPtr, 4);
 		int oldAngle = 0;
 		
-		//Если поступили новые данные
+		//Р•СЃР»Рё РїРѕСЃС‚СѓРїРёР»Рё РЅРѕРІС‹Рµ РґР°РЅРЅС‹Рµ
 		if (dataPort[0] != oldAngle)
 		{
-			//Если это не помехи и данные целые (контрольная сумма совпадает)
+			//Р•СЃР»Рё СЌС‚Рѕ РЅРµ РїРѕРјРµС…Рё Рё РґР°РЅРЅС‹Рµ С†РµР»С‹Рµ (РєРѕРЅС‚СЂРѕР»СЊРЅР°СЏ СЃСѓРјРјР° СЃРѕРІРїР°РґР°РµС‚)
 			if (checkControlSum(dataPort[0], dataPort[1], dataPort[2], dataPort[3]))
 			{
 				//cout << dataPort[0] << " | " << dataPort[1] << " | " << dataPort[2] << " | "  << dataPort[3] << endl;
@@ -71,7 +71,7 @@ void Update(int)
 					objectAngleOld[angleNew] = objectAngle[angleNew];
 					objectAngle[angleNew] = dataPort[2];
 				}
-				//Обновление экрана
+				//РћР±РЅРѕРІР»РµРЅРёРµ СЌРєСЂР°РЅР°
 				display();
 			}
 		}
@@ -82,12 +82,12 @@ int main(int argc, char * argv[])
 {
 	setlocale(LC_ALL, "Russian");
 
-	//Открытие порта для работы с радаром
+	//РћС‚РєСЂС‹С‚РёРµ РїРѕСЂС‚Р° РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ СЂР°РґР°СЂРѕРј
 	port.Open(2, 9600);
 
-	//Установка параметров запуска 
+	//РЈСЃС‚Р°РЅРѕРІРєР° РїР°СЂР°РјРµС‚СЂРѕРІ Р·Р°РїСѓСЃРєР° 
 		int var = 0;
-		cout << "Линии или точки? (1/2)" << endl;
+		cout << "Р›РёРЅРёРё РёР»Рё С‚РѕС‡РєРё? (1/2)" << endl;
 		cin >> var;
 
 		if (var == 1)
@@ -96,7 +96,7 @@ int main(int argc, char * argv[])
 			typeSonar = circle;
 
 		var = 0;
-		cout << "Область видимости радара 180* или 360*? (1/2)" << endl;
+		cout << "РћР±Р»Р°СЃС‚СЊ РІРёРґРёРјРѕСЃС‚Рё СЂР°РґР°СЂР° 180* РёР»Рё 360*? (1/2)" << endl;
 		cin >> var;
 
 		if (var == 1)
@@ -104,7 +104,7 @@ int main(int argc, char * argv[])
 		if (var == 2)
 			angleSonar = coverage360;
 
-	//Инициализация масивов под объекты
+	//РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РјР°СЃРёРІРѕРІ РїРѕРґ РѕР±СЉРµРєС‚С‹
 		objectAngle = new int[angleSonar];
 		objectAngleOld = new int[angleSonar];
 
@@ -125,7 +125,7 @@ int main(int argc, char * argv[])
 	glutMainLoop();
 	port.Close();
 	
-	//Очищаяем память
+	//РћС‡РёС‰Р°СЏРµРј РїР°РјСЏС‚СЊ
 		delete[] objectAngle;
 		delete[] objectAngleOld;
 

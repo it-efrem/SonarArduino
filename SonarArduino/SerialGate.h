@@ -1,11 +1,11 @@
-/*
-SerialGate - Áèëèîòåêà äëÿ ðàáîòû ñ COM-ïîðòàìè
-Çàìå÷àíèå - áèáëèîòåêà ñòàðàÿ, êîìïèëèðóéòå ïðèëîæåíèå ïîä x86 ñèñòåìó!
+ï»¿/*
+SerialGate - Ð‘Ð¸Ð»Ð¸Ð¾Ñ‚ÐµÐºÐ° Ð´Ð»Ñ Ñ€Ð°Ð±Ð¾Ñ‚Ñ‹ Ñ COM-Ð¿Ð¾Ñ€Ñ‚Ð°Ð¼Ð¸
+Ð—Ð°Ð¼ÐµÑ‡Ð°Ð½Ð¸Ðµ - Ð±Ð¸Ð±Ð»Ð¸Ð¾Ñ‚ÐµÐºÐ° ÑÑ‚Ð°Ñ€Ð°Ñ, ÐºÐ¾Ð¼Ð¿Ð¸Ð»Ð¸Ñ€ÑƒÐ¹Ñ‚Ðµ Ð¿Ñ€Ð¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð¿Ð¾Ð´ x86 ÑÐ¸ÑÑ‚ÐµÐ¼Ñƒ!
 
-Äîáàâèë â êëàññ ïåðåìåííûå, 2 êîíñòðóêòîðà è 2 ìåòîäà, êîòîðûå îïðåäåëåíû â ýòîì ôàéëå
+Ð”Ð¾Ð±Ð°Ð²Ð¸Ð» Ð² ÐºÐ»Ð°ÑÑ Ð¿ÐµÑ€ÐµÐ¼ÐµÐ½Ð½Ñ‹Ðµ, 2 ÐºÐ¾Ð½ÑÑ‚Ñ€ÑƒÐºÑ‚Ð¾Ñ€Ð° Ð¸ 2 Ð¼ÐµÑ‚Ð¾Ð´Ð°, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½Ñ‹ Ð² ÑÑ‚Ð¾Ð¼ Ñ„Ð°Ð¹Ð»Ðµ
 
-Åñëè Âû íå çíàåòå, ÷òî äåëàòü ñ ýòèì ôàéëîì, òî ñìîòðèòå óðîê íà YouTube:
-Êàíàë - https://www.youtube.com/channel/UCTGS5FRyz564wwiyNs8J54A
+Ð•ÑÐ»Ð¸ Ð’Ñ‹ Ð½Ðµ Ð·Ð½Ð°ÐµÑ‚Ðµ, Ñ‡Ñ‚Ð¾ Ð´ÐµÐ»Ð°Ñ‚ÑŒ Ñ ÑÑ‚Ð¸Ð¼ Ñ„Ð°Ð¹Ð»Ð¾Ð¼, Ñ‚Ð¾ ÑÐ¼Ð¾Ñ‚Ñ€Ð¸Ñ‚Ðµ ÑƒÑ€Ð¾Ðº Ð½Ð° YouTube:
+ÐšÐ°Ð½Ð°Ð» - https://www.youtube.com/c/code_robots
 */
 
 #if !defined (SERIALGATEH)
@@ -40,6 +40,7 @@ extern "C" class __declspec (dllexport)  SerialGate
 	const int maxBuffer;
 
 	int countReadByte;
+	char *buf;
 public:
 	
 	enum IN_LINES_NAME {CTS, DSR, RING, RLSD};
@@ -49,13 +50,15 @@ public:
 
 	SerialGate(const int numCom, const int rate) :
 		numCom(numCom), rate(rate), speedMS(30), maxBuffer(256), countReadByte(0)
-	{}
+	{
+		*buf = new char[maxBuffer];
+	}
 
 	SerialGate(const int numCom, const int rate, const int speedMS, const int maxBuffer) :
 		numCom(numCom), rate(rate), speedMS(speedMS), maxBuffer(maxBuffer), countReadByte(0)
-	{}
-
-	~SerialGate();	
+	{
+		*buf = new char[maxBuffer];
+	}
 
 	bool Open(int port, int baud);	
 	int Send(char* buff, int szBuff);
@@ -67,9 +70,11 @@ public:
 	void GetPortsInfo(PortInfo* pi);
 	void Close();
 	void Clean();
+
+	~SerialGate();
 };
 
-//Âûâîä íà ýêðàí âñåãî ñîäåðæèìîãî ïîòîêà
+//Ð’Ñ‹Ð²Ð¾Ð´ Ð½Ð° ÑÐºÑ€Ð°Ð½ Ð²ÑÐµÐ³Ð¾ ÑÐ¾Ð´ÐµÑ€Ð¶Ð¸Ð¼Ð¾Ð³Ð¾ Ð¿Ð¾Ñ‚Ð¾ÐºÐ°
 void SerialGate::ReadStream()
 {
 	if (!this->Open(numCom, rate))
@@ -92,20 +97,15 @@ void SerialGate::ReadStream()
 	this->Close();
 }
 
-//Äëÿ ÷òåíèÿ äàííûõ ïî áàéòàì
+//Ð”Ð»Ñ Ñ‡Ñ‚ÐµÐ½Ð¸Ñ Ð´Ð°Ð½Ð½Ñ‹Ñ… Ð¿Ð¾ Ð±Ð°Ð¹Ñ‚Ð°Ð¼
 void SerialGate::GetSeparationData(int *arrayValue, int countUnitData)
 {
-	char *buf = new char[this->maxBuffer];
-	int count = 0;
-
-	this->countReadByte = this->Recv(buf, sizeof(buf));
+	this->countReadByte = Recv(buf, sizeof(buf));
 
 	for (int i = 0; i < countUnitData; i++)
 	{
 		arrayValue[i] = 0;
 		arrayValue[i] = int(buf[i]) + 128;
 	}
-
-	delete[] buf;
 }
 #endif
